@@ -1,8 +1,10 @@
-from flask import Flask, render_template, request,jsonify
+from flask import Flask, render_template, request, Response,jsonify
 from flask_cors import CORS,cross_origin
 import requests
 from bs4 import BeautifulSoup as bs
 from urllib.request import urlopen as uReq
+import io  # Import the 'io' module
+import csv
 
 app = Flask(__name__)
 
@@ -77,6 +79,38 @@ def index():
 
     else:
         return render_template('index.html')
+
+
+@app.route('/download_reviews', methods=['GET'])
+def download_reviews():
+    # Assume that reviews is a list of dictionaries containing review data
+    reviews = [
+        {"Product": "Product 1", "Name": "User 1", "Rating": "5", "CommentHead": "Good", "Comment": "Great product"},
+        {"Product": "Product 2", "Name": "User 2", "Rating": "4", "CommentHead": "Nice", "Comment": "Impressed"},
+        # Add more review data...
+    ]
+
+    csv_data = reviews_to_csv(reviews)  # Create CSV content
+
+    response = Response(
+        csv_data,
+        content_type="text/csv",
+        headers={"Content-disposition": "attachment; filename=reviews.csv"}
+    )
+    return response
+
+
+def reviews_to_csv(reviews):
+    # Convert the list of dictionaries to CSV content
+    csv_output = io.StringIO()
+    csv_writer = csv.DictWriter(csv_output, fieldnames=["Product", "Name", "Rating", "CommentHead", "Comment"])
+    csv_writer.writeheader()
+    csv_writer.writerows(reviews)
+    csv_data = csv_output.getvalue()
+    return csv_data
+
+if __name__ == "__main__":
+    app.run(debug=True)
 
 if __name__ == "__main__":
     #app.run(host='127.0.0.1', port=8001, debug=True)
